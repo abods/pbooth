@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <!-- <script src="/node_modules/dat-gui/index.js"></script> -->
+  <!-- <script src="/node_modules/color-thief/js/color-thief.js"></script> -->
+  <script src="/node_modules/fabric/dist/fabric.js"></script>
+  <script src="src/js/filters/fabric-brush.js"></script>
+  <link rel="stylesheet" href="dist/css/app.css" media="all">
+
+  <script src="node_modules/lockr/lockr.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/1.0.0/anime.min.js"></script>
+
+  <!-- History V2 -->
+  <script src="src/js/filters/history2.js"></script>
+  <script src="src/js/filters/removeColor.js"></script>
+  <script src="src/js/filters/presets.js"></script>
+  <script src="src/js/filters/photo-gallery.js"></script>
+  <script src="src/js/paint-ui.js"></script>
+
+  <!-- tools  -->
+  <script src="src/js/writetext.js"></script>
+  <script src="src/js/lockmovment.js"></script>
+  <script src="src/js/image-search.js"></script>
+  <script src="src/js/printartwork.js"></script>
+  <!-- Products -->
+  <script src="src/js/products/print-with-frame.js"></script>
+  <!-- Styles -->
+  <script src="src/js/styles/body-parts.js"></script>
+  <script src="src/js/styles/poster.js"></script>
+
+  <!--  -->
+  <script src="src/js/filters/app.js"></script>
+<script src="https://www.google.com/jsapi"></script>
+</head>
+<!-- <div>
+  <input type="button" value="undo" onclick="historyUndo()" style="display:inline">
+  <input type="button" value="redo" onclick="historyRedo()" style="display:inline">
+  <input type="button" value="clear" onclick="historyClearAll()" style="display:inline">
+</div> -->
+<body id="app" lang="ar" class="show-all presets_ image-search_ black">
+  <div class="ui" id="image-search-wrap"></div>
+  <div class="ui" id="presets-wrap"></div>
+  <div class="ui" id="history-wrap"></div>
+  <div class="ui category" id="brushes-wrap"></div>
+  <div class="ui category" id="text-wrap"></div>
+  <div class="ui category" id="shapes-wrap"></div>
+  <div class="ui" id="paint-wrap" ></div>
+  <div class="ui" id="options-wrap"></div>
+  <div class="ui" id="print-wrap" ></div>
+  <div class="ui" id="photo-wrap"></div>
+  <ul class="ui nav" id="nav-wrap"></ul>
+  <ul class="ui nav sub" id="filters-wrap"></ul>
+  <ul class="ui nav sub" id="frames-wrap"></ul>
+</body>
+
+
+<!-- App Initalization -->
+<script>
+'use strict';
+// fabric.util.getRandomInt(-30, 30)
+// fabric.Object.prototype.transparentCorners = false;
+// fabric.Object.prototype.originX = fabric.Object.prototype.originY = 'center';
+// fabric.StaticCanvas.prototype.width=999;
+  var dom = document.createElement('canvas');
+      dom.id="canvas";
+      var ref = document.getElementById('app');
+      ref.appendChild(dom);
+
+      var canvas = new fabric.Canvas( dom );
+      // canvas.selection = false;
+
+      // Push last selected object to front
+      // canvas.on('object:selected',function() {
+      //   canvas.bringToFront( canvas.getActiveObject() );
+      // });
+
+      var App = new App(canvas);
+
+      // var x_ = new photoOptions(canvas,'body')
+
+
+
+</script>
+
+
+<!-- Load app modules -->
+<script src="src/js/filters/free-drawing.js"></script>
+<script src="src/js/filters/6days.js"></script>
+<script src="src/js/filters/brushes.js"></script>
+
+
+<!-- Runtime -->
+<script>
+
+    App._brushes=['PencilBrush','CircleBrush','SprayBrush','PatternBrush'];
+
+</script>
+
+
+<!-- Paint UI for free-drawing.js -->
+<script>
+  // ONLY DOM/UI SHIT
+
+  var historyWrap = document.querySelector('#history-wrap'),
+      paintWrap = document.querySelector('#paint-wrap'),
+      photoWrap = document.querySelector('#photo-wrap'),
+      brushesWrap = document.querySelector('#brushes-wrap'),
+      optionsWrap = document.querySelector('#options-wrap'),
+      textWrap = document.querySelector('#text-wrap'),
+      printWrap = document.querySelector('#print-wrap'),
+      imageSearchWrap = document.querySelector('#image-search-wrap'),
+      presetsWrap = document.querySelector('#presets-wrap');
+
+  writetext(canvas,textWrap);
+  history2(App,canvas,historyWrap);
+  lockMovment(canvas,optionsWrap);
+  printArtwork(canvas,printWrap);
+  photoGallery(canvas,photoWrap);
+  showPaintUi(canvas,paintWrap);
+  imageSearch(canvas,brushesWrap,imageSearchWrap);
+
+
+
+
+
+
+//
+  // showTextColorOption
+  canvas.on('object:selected', showTextColorOption);
+
+  var colorInput = document.createElement('input');
+  colorInput.type='color';
+  colorInput.id='text-color';
+  colorInput.style.display = 'none';
+  colorInput.value = canvas.freeDrawingBrush.color || '';
+  colorInput.onchange = function functionName(e) {
+    var currentActivEl = canvas.getActiveObject();
+    console.log(currentActivEl,currentActivEl.type);
+    if (currentActivEl.type == 'path') {
+      currentActivEl.set({stroke:colorInput.value});
+      console.log(currentActivEl);
+      // currentActivEl.
+    }else if (currentActivEl.type == 'i-text') {
+        currentActivEl.set({fill:colorInput.value});
+    }
+    canvas.renderAll();
+  }
+  optionsWrap.appendChild(colorInput);
+
+  function showTextColorOption(e){
+    if(e.target.get('type') == 'i-text'){
+      colorInput.style.display = 'block';
+    }
+
+  }
+
+//
+
+  function windowResized(){
+    // canvas.setWidth( window.innerWidth);
+    // canvas.setHeight( window.innerHeight);
+    // presetsWrap.style.width = window.innerWidth+'px';
+    // presetsWrap.style.left = -window.innerWidth+'px';
+  }
+  window.onresize = function() {
+    windowResized();
+  }
+  windowResized();
+
+    // PRESETS UI
+    canvas.on('history:stored',function(preset) {
+      // console.log(preset);
+      refreshPresetUi()
+    });
+
+      // var showPresets = function() {
+
+        var siteMenu = document.querySelector('#site-menu'),
+            button = document.createElement('button'),
+            ul = document.createElement('ul');
+            ul.id='presets';
+            button.id='menu-btn';
+            button.className='btn rounded';
+            var appRefClassLis = document.getElementById('app').classList;
+            var togglePresets = function() {
+              appRefClassLis.toggle('presets');
+            }
+            button.onclick = togglePresets;
+            presetsWrap.appendChild(button);
+
+
+        var refreshPresetUi = function() {
+            console.log('refreshPresetUi');
+            // TODO FIX APPENDING HTML TO OLD CONTENT
+            // ul.innerHTML=''
+            App._presets.forEach(function(p,n) {
+
+              var btn = document.createElement('button'),
+                  img = document.createElement('img'),
+                  li = document.createElement('li');
+                  btn.value = n;
+
+                  li.type = p.cat || null;
+                  li.lang = p.lang || null;
+
+              img.src = "/src/svg/x.png";
+              console.log('Preset: ',p);
+
+              btn.addEventListener('click',function() {
+                // canvas.trigger('history.load',btn.value);
+                // console.log(p.trigger);
+                canvas.trigger(p.trigger);
+                // togglePresets();
+              });
+
+              btn.appendChild(img);
+              btn.innerHTML += p.name;
+              li.appendChild(btn);
+              ul.appendChild(li);
+              // ul.insertBefore(li, ul.firstChild);
+              console.log('Added new Preset: ',li);
+            });
+            presetsWrap.appendChild(ul);
+        };
+        // refreshPresetUi();
+
+        var freeDrawingBtn = document.createElement('button'),
+            img0 = document.createElement('img'),
+            li0 = document.createElement('li');
+            img0.src = "https://maxcdn.icons8.com/iOS7/PNG/100/Editing/brush-100.png";
+            freeDrawingBtn.appendChild(img0);
+            freeDrawingBtn.innerHTML+='Free Drawing';
+            freeDrawingBtn.className = 'free-drawing';
+            freeDrawingBtn.onclick = togglePresets;
+            li0.appendChild(freeDrawingBtn);
+            li0.type = '*';
+            li0.lang = "*";
+
+        ul.appendChild(li0);
+
+
+// Register a content
+bodyPartsV1(canvas,document.querySelector('#presets'));
+
+
+var APPui = new UI(canvas,App,App.paperSizes[1]);
+// API
+// var paperHouse = new App.Product(canvas);
+//     paperHouse.defaults = {
+//       name:'Paper house',
+//       price: 23.5,
+//       backgroundColor: 'blue',
+//       size:App.paperSizes[0],
+//       minSize: App.paperSizes[0],
+//       maxSize: App.paperSizes[1]
+//     }
+//     paperHouse.content = App._presets[1];
+//     paperHouse.filters = new App.Filter(FILTER);
+//     paperHouse.overlay = new App.overlay(OVERLAY);
+//     paperHouse.cover = new App.Cover(SVG);
+
+
+App.buildNavUi(document.querySelector('#nav-wrap'));
+App.buildFiltersUi( document.querySelector('#filters-wrap') );
+App.buildFramesUi( document.querySelector('#frames-wrap') )
+
+// Disaple objects from moving outside hte canvas
+canvas.on('object:modified', function (e) {
+    var obj = e.target;
+    var rect = obj.getBoundingRect();
+    if (obj.type == 'image') {
+      return;
+    }
+    if (rect.left < 0
+        || rect.top < 0
+        || rect.left + rect.width > canvas.getWidth()
+        || rect.top + rect.height > canvas.getHeight()) {
+        if (obj.getAngle() != obj.originalState.angle) {
+            obj.setAngle(obj.originalState.angle);
+        }
+        else {
+            obj.setTop(obj.originalState.top);
+            obj.setLeft(obj.originalState.left);
+            obj.setScaleX(obj.originalState.scaleX);
+            obj.setScaleY(obj.originalState.scaleY);
+        }
+        obj.setCoords();
+    }
+});
+
+
+
+//
+/*========================================
+=            toggleNav                  =
+========================================*/
+// var paintBtn = document.querySelector('#site-menu');
+// paintBtn.addEventListener('click',function() {
+//   // click
+//   toggleNav();
+//   console.log('toggled');
+// });
+//
+// function toggleNav() {
+//   var status = document.querySelector('#site-wrapper').classList;
+//     if (status.contains('show-nav')) {
+//         // Do things on Nav Close
+//         status.remove('show-nav');
+//     } else {
+//         // Do things on Nav Open
+//         status.add('show-nav');
+//     }
+// }
+
+
+
+// Background color
+
+
+// var c = document.getElementById("canvas");
+// var ctx = c.getContext("2d");
+// var cH;
+// var cW;
+// var bgColor = "#FF6138";
+// var animations = [];
+// var circles = [];
+//
+// var colorPicker = (function() {
+//   var colors = ["#FF6138", "#FFBE53", "#2980B9", "#282741"];
+//   var index = 0;
+//
+//   function next() {
+//     index = index++ < colors.length - 1 ? index : 0;
+//     return colors[index];
+//   }
+//
+//   function current() {
+//     return colors[index]
+//   }
+//   return {
+//     next: next,
+//     current: current
+//   }
+// })();
+//
+// function removeAnimation(animation) {
+//   var index = animations.indexOf(animation);
+//   if (index > -1) animations.splice(index, 1);
+// }
+//
+// function calcPageFillRadius(x, y) {
+//   var l = Math.max(x - 0, cW - x);
+//   var h = Math.max(y - 0, cH - y);
+//   return Math.sqrt(Math.pow(l, 2) + Math.pow(h, 2));
+// }
+//
+// function addClickListeners() {
+//   document.addEventListener("touchstart", handleEvent);
+//   document.addEventListener("mousedown", handleEvent);
+// };
+//
+// function handleEvent(e) {
+//   if (e.touches) {
+//     e.preventDefault();
+//     e = e.touches[0];
+//   }
+//   var currentColor = colorPicker.current();
+//   var nextColor = colorPicker.next();
+//   var targetR = calcPageFillRadius(e.pageX, e.pageY);
+//   var rippleSize = Math.min(200, (cW * .4));
+//   var minCoverDuration = 750;
+//
+//   var pageFill = new Circle({
+//     x: e.pageX,
+//     y: e.pageY,
+//     r: 0,
+//     fill: nextColor
+//   });
+//   var fillAnimation = anime({
+//     targets: pageFill,
+//     r: targetR,
+//     duration: Math.max(targetR / 2, minCoverDuration),
+//     easing: "easeOutQuart",
+//     complete: function() {
+//       bgColor = pageFill.fill;
+//       removeAnimation(fillAnimation);
+//     }
+//   });
+//
+//   var ripple = new Circle({
+//     x: e.pageX,
+//     y: e.pageY,
+//     r: 0,
+//     fill: currentColor,
+//     stroke: {
+//       width: 3,
+//       color: currentColor
+//     },
+//     opacity: 1
+//   });
+//   var rippleAnimation = anime({
+//     targets: ripple,
+//     r: rippleSize,
+//     opacity: 0,
+//     easing: "easeOutExpo",
+//     duration: 900,
+//     complete: removeAnimation
+//   });
+//
+//   var particles = [];
+//   for (var i = 0; i < 32; i++) {
+//     var particle = new Circle({
+//       x: e.pageX,
+//       y: e.pageY,
+//       fill: currentColor,
+//       r: anime.random(24, 48)
+//     })
+//     particles.push(particle);
+//   }
+//   var particlesAnimation = anime({
+//     targets: particles,
+//     x: function(particle) {
+//       return particle.x + anime.random(rippleSize, -rippleSize);
+//     },
+//     y: function(particle) {
+//       return particle.y + anime.random(rippleSize * 1.15, -rippleSize * 1.15);
+//     },
+//     r: 0,
+//     easing: "easeOutExpo",
+//     duration: anime.random(1000, 1300),
+//     complete: removeAnimation
+//   });
+//   animations.push(fillAnimation, rippleAnimation, particlesAnimation);
+// }
+//
+// function extend(a, b) {
+//   for (var key in b) {
+//     if (b.hasOwnProperty(key)) {
+//       a[key] = b[key];
+//     }
+//   }
+//   return a;
+// }
+//
+// var Circle = function(opts) {
+//   extend(this, opts);
+// }
+//
+// Circle.prototype.draw = function() {
+//   ctx.globalAlpha = this.opacity || 1;
+//   ctx.beginPath();
+//   ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, false);
+//   if (this.stroke) {
+//     ctx.strokeStyle = this.stroke.color;
+//     ctx.lineWidth = this.stroke.width;
+//     ctx.stroke();
+//   }
+//   if (this.fill) {
+//     ctx.fillStyle = this.fill;
+//     ctx.fill();
+//   }
+//   ctx.closePath();
+//   ctx.globalAlpha = 1;
+// }
+//
+// var animate = anime({
+//   duration: Infinity,
+//   update: function() {
+//     ctx.fillStyle = bgColor;
+//     ctx.fillRect(0, 0, cW, cH);
+//     animations.forEach(function(anim) {
+//       anim.animatables.forEach(function(animatable) {
+//         animatable.target.draw();
+//       });
+//     });
+//   }
+// });
+//
+// var resizeCanvas = function() {
+//   cW = window.innerWidth;
+//   cH = window.innerHeight;
+//   c.width = cW * devicePixelRatio;
+//   c.height = cH * devicePixelRatio;
+//   ctx.scale(devicePixelRatio, devicePixelRatio);
+// };
+//
+// (function init() {
+//   resizeCanvas();
+//   if (window.CP) {
+//     // CodePen's loop detection was causin' problems
+//     // and I have no idea why, so...
+//     window.CP.PenTimer.MAX_TIME_IN_LOOP_WO_EXIT = 6000;
+//   }
+//   window.addEventListener("resize", resizeCanvas);
+//   addClickListeners();
+//   if (!!window.location.pathname.match(/fullcpgrid/)) {
+//     startFauxClicking();
+//   }
+//   handleInactiveUser();
+// })();
+//
+// function handleInactiveUser() {
+//   var inactive = setTimeout(function() {
+//     fauxClick(cW / 2, cH / 2);
+//   }, 2000);
+//
+//   function clearInactiveTimeout() {
+//     clearTimeout(inactive);
+//     document.removeEventListener("mousedown", clearInactiveTimeout);
+//     document.removeEventListener("touchstart", clearInactiveTimeout);
+//   }
+//
+//   document.addEventListener("mousedown", clearInactiveTimeout);
+//   document.addEventListener("touchstart", clearInactiveTimeout);
+// }
+//
+// function startFauxClicking() {
+//   setTimeout(function() {
+//     fauxClick(anime.random(cW * .2, cW * .8), anime.random(cH * .2, cH * .8));
+//     startFauxClicking();
+//   }, anime.random(200, 900));
+// }
+//
+// function fauxClick(x, y) {
+//   var fauxClick = new Event("mousedown");
+//   fauxClick.pageX = x;
+//   fauxClick.pageY = y;
+//   document.dispatchEvent(fauxClick);
+// }
+</script>
+
+
+</html>

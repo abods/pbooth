@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="/node_modules/color-thief/js/color-thief.js"></script>
+  <script src="/node_modules/fabric/dist/fabric.js"></script>
+  <script src="/node_modules/dat-gui/index.js"></script>
+  <script src="src/js/filters/removeColor.js"></script>
+  <script src="src/js/filters/history.js"></script>
+
+  <style>
+    canvas{
+      position: absolute;
+    }
+    .dg{
+      z-index: 10 !important;
+    }
+  </style>
+  <script>
+  (function(global) {
+
+    'use strict';
+
+    var fabric  = global.fabric || (global.fabric = { }),
+        extend = fabric.util.object.extend;
+
+    fabric.Image.filters.Contrast = fabric.util.createClass(fabric.Image.filters.BaseFilter, /** @lends fabric.Image.filters.MyFilter.prototype */ {
+
+  	    /**
+  	     * Filter type
+  	     * @param {String} type
+  	     * @default
+  	     */
+  	    type: 'Contrast',
+
+  	    /**
+  	     * Constructor
+  	     */
+  	    initialize: function(options) {
+  	      options = options || { };
+  	    },
+
+  	    /**
+  	     * Applies filter to canvas element
+  	     * @param {Object} canvasEl Canvas element to apply filter to
+  	     */
+  	    applyTo: function(canvasEl) {
+  	      var context = canvasEl.getContext('2d'),
+  	          imageData = context.getImageData(0, 0, canvasEl.width, canvasEl.height),
+  	          data = imageData.data;
+  	      var contrast = $("#contrast").val();
+  	      var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+  	      for(var i=0;i<data.length;i+=4)
+  	      {
+  	          data[i] = factor * (data[i] - 128) + 128;
+  	          data[i+1] = factor * (data[i+1] - 128) + 128;
+  	          data[i+2] = factor * (data[i+2] - 128) + 128;
+  	      }
+
+  	      context.putImageData(imageData, 0, 0);
+  	    },
+
+  	    /**
+  	     * Returns object representation of an instance
+  	     * @return {Object} Object representation of an instance
+  	     */
+  	    toObject: function() {
+  	      return extend(this.callSuper('toObject'), {
+
+  	      });
+  	    }
+  	  }); /**
+     * Returns filter instance from an object representation
+     * @static
+     * @param {Object} object Object to create an instance from
+     */
+    fabric.Image.filters.Contrast.fromObject = function(object) {
+  	    return new fabric.Image.filters.Contrast(object);
+    };
+
+
+
+
+    // remove green
+
+
+  })(typeof exports !== 'undefined' ? exports : this);
+
+function setDPI(canvas, dpi) {
+    // Set up CSS size if it's not set up already
+    if (!canvas.wrapperEl.style.width)
+        canvas.wrapperEl.style.width = canvas.width + 'px';
+    if (!canvas.wrapperEl.style.height)
+        canvas.wrapperEl.style.height = canvas.height + 'px';
+
+    var scaleFactor = dpi / 96;
+    canvas.setWidth(Math.ceil(canvas.width * scaleFactor));
+    canvas.setHeight(Math.ceil(canvas.height * scaleFactor));
+    // canvas.width = Math.ceil(canvas.width * scaleFactor);
+    // canvas.height = Math.ceil(canvas.height * scaleFactor);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scaleFactor, scaleFactor);
+}
+</script>
+</head>
+<body style="background-color:white">
+  <!-- <canvas id="canvas" style="z-index:1; width:100%; height:100%" ></canvas> -->
+  <!-- <canvas id="cc" style="z-index:2"></canvas> -->
+  <!-- <img id="img" src="/src/img/bad.jpg" style="display:none"  alt=""> -->
+  <!-- <div id="colors"></div> -->
+
+
+<script>
+
+</script>
+
+  <div>
+    <input type="button" value="undo" onclick="undo()">
+    <input type="button" value="redo" onclick="redo()">
+    <input type="button" value="clear" onclick="clearAll()">
+  </div>
+
+<div id="bd-wrapper" ng-controller="CanvasControls">
+
+  <style>
+.controls { display: inline-block; background: #fafafa; margin-left: 10px; padding: 15px; border-left: 1px dotted #aaa; }
+.canvas-container { display: inline-block; vertical-align: top; }
+input[disabled] { opacity: 0.5; }
+#bd-wrapper { min-width: 1600px; }
+</style>
+
+<canvas id="c" width="600" height="600"></canvas>
+<div class="controls">
+<h3>Filters:</h3>
+<p>
+<label><span>Grayscale:</span> <input type="checkbox" id="grayscale" disabled></label>
+</p>
+<p>
+<label><span>Invert:</span> <input type="checkbox" id="invert" disabled></label>
+</p>
+<p>
+<label><span>Sepia:</span> <input type="checkbox" id="sepia" disabled></label>
+</p>
+<p>
+<label><span>Sepia2:</span> <input type="checkbox" id="sepia2" disabled></label>
+</p>
+<p>
+<label><span>Remove white:</span> <input type="checkbox" id="remove-white" disabled></label>
+<br>
+<label>Threshold: <input type="range" id="remove-white-threshold" value="60" min="0" max="255" disabled></label>
+<br>
+<label>Distance: <input type="range" id="remove-white-distance" value="10" min="0" max="255" disabled></label>
+</p>
+<p>
+<label><span>Brightness:</span> <input type="checkbox" id="brightness" disabled></label>
+<br>
+<label>Value: <input type="range" id="brightness-value" value="100" min="-255" max="255" disabled></label>
+</p>
+<p>
+<label><span>Contrast:</span> <input type="checkbox" id="contrast" disabled></label>
+<br>
+<label>Value: <input type="range" id="contrast-value" value="0" min="-255" max="255" disabled></label>
+</p>
+<p>
+<label><span>Saturate:</span> <input type="checkbox" id="saturate" disabled></label>
+<br>
+<label>Value: <input type="range" id="saturate-value" value="100" min="-100" max="100" disabled></label>
+</p>
+<p>
+<label><span>Noise:</span> <input type="checkbox" id="noise" disabled></label>
+<br>
+<label>Value: <input type="range" id="noise-value" value="100" min="0" max="1000" disabled></label>
+</p>
+<p>
+<label><span>GradientTransparency:</span> <input type="checkbox" id="gradient-transparency" disabled></label>
+<br>
+<label>Value: <input type="range" id="gradient-transparency-value" value="100" min="0" max="255" disabled></label>
+</p>
+<p>
+<label><span>Pixelate</span> <input type="checkbox" id="pixelate" disabled></label>
+<br>
+<label>Value: <input type="range" id="pixelate-value" value="4" min="2" max="20" disabled></label>
+</p>
+<p>
+<label><span>Blur:</span> <input type="checkbox" id="blur" disabled></label>
+</p>
+<p>
+<label><span>Sharpen:</span> <input type="checkbox" id="sharpen" disabled></label>
+</p>
+<p>
+<label><span>Emboss:</span> <input type="checkbox" id="emboss" disabled></label>
+</p>
+<p>
+<label><span>Tint:</span> <input type="checkbox" id="tint" disabled></label><br>
+<label>Color: <input type="color" id="tint-color" value=""></label><br>
+<label>Opacity: <input type="range" id="tint-opacity" min="0" max="1" value="1" step="0.1"></label><br>
+</p>
+<p>
+<label><span>Multiply:</span> <input type="checkbox" id="multiply" disabled></label><br>
+<label>Color: <input type="color" id="multiply-color" value=""></label><br>
+</p>
+<p>
+<label><span>Blend:</span> <input type="checkbox" id="blend" disabled></label>
+<br>
+<label>Mode:</label>
+<select id="blend-mode" name="blend-mode">
+  <option selected value="add">Add</option>
+  <option value="diff">Diff</option>
+  <option value="subtract">Subtract</option>
+  <option value="multiply">Multiply</option>
+  <option value="screen">Screen</option>
+  <option value="lighten">Lighten</option>
+  <option value="darken">Darken</option>
+</select>
+<br>
+<label>Color: <input type="color" id="blend-color" value="#00f900"></label><br>
+</p>
+</div>
+
+<script id="main">
+
+(function() {
+
+
+
+
+
+
+
+
+fabric.Object.prototype.transparentCorners = false;
+var $ = function(id){return document.getElementById(id)};
+
+function applyFilter(index, filter) {
+var obj = canvas.getActiveObject();
+obj.filters[index] = filter;
+obj.applyFilters(canvas.renderAll.bind(canvas));
+}
+
+function applyFilterValue(index, prop, value) {
+var obj = canvas.getActiveObject();
+if (obj.filters[index]) {
+  obj.filters[index][prop] = value;
+  obj.applyFilters(canvas.renderAll.bind(canvas));
+}
+}
+
+fabric.Object.prototype.padding = 5;
+fabric.Object.prototype.transparentCorners = false;
+
+var canvas = this.__canvas = new fabric.Canvas('c'),
+  f = fabric.Image.filters;
+
+
+
+
+// fabric.Image.fromURL('/src/img/ok.jpg', function(img) {
+//   canvas.backgroundImage = img;
+//   canvas.backgroundImage.width = 600;
+//   canvas.backgroundImage.height = 600;
+// });
+
+
+canvas.on({
+'object:selected': function() {
+  fabric.util.toArray(document.getElementsByTagName('input'))
+                      .forEach(function(el){ el.disabled = false; })
+
+  var filters = ['grayscale', 'invert', 'remove-white', 'sepia', 'sepia2',
+                  'brightness', 'contrast', 'saturate', 'noise', 'gradient-transparency', 'pixelate',
+                  'blur', 'sharpen', 'emboss', 'tint', 'multiply', 'blend'];
+
+  for (var i = 0; i < filters.length; i++) {
+    $(filters[i]).checked = !!canvas.getActiveObject().filters[i];
+  }
+},
+'selection:cleared': function() {
+  fabric.util.toArray(document.getElementsByTagName('input'))
+                      .forEach(function(el){ el.disabled = true; })
+}
+});
+
+fabric.Image.fromURL('/src/img/ok.jpg', function(img) {
+  var oImg = img.set({ left: 50, top: 100, angle: -15 }).scale(0.9);
+  canvas.add(oImg).renderAll();
+  canvas.setActiveObject(oImg);
+});
+
+_history = new History(JSON.stringify(canvas),10);
+  // console.log(_history.add(),_history.add());
+
+  canvas.on(
+      'object:modified', function (e) {
+      console.log('object:modified');
+      _history.add(JSON.stringify(canvas));
+  },
+      'object:added', function (e) {
+      console.log('object:added');
+      _history.add(JSON.stringify(canvas));
+  });
+
+  undo = function() {
+    // canvas.clear().renderAll();
+    canvas.loadFromJSON(_history.undo());
+    canvas.renderAll();
+  }
+  redo = function() {
+    // canvas.clear().renderAll();
+    canvas.loadFromJSON(_history.redo());
+    canvas.renderAll();
+  }
+  clearAll = function() {
+    // canvas.clear().renderAll();
+    canvas.loadFromJSON(_history.clear());
+    canvas.renderAll();
+  }
+
+
+
+
+
+var indexF;
+$('grayscale').onclick = function() {
+applyFilter(0, this.checked && new f.Grayscale());
+};
+$('invert').onclick = function() {
+applyFilter(1, this.checked && new f.Invert());
+};
+$('remove-white').onclick = function () {
+applyFilter(2, this.checked && new f.RemoveWhite({
+  threshold: $('remove-white-threshold').value,
+  distance: $('remove-white-distance').value
+}));
+};
+$('remove-white-threshold').onchange = function() {
+applyFilterValue(2, 'threshold', this.value);
+};
+$('remove-white-distance').onchange = function() {
+applyFilterValue(2, 'distance', this.value);
+};
+$('sepia').onclick = function() {
+applyFilter(3, this.checked && new f.Sepia());
+};
+$('sepia2').onclick = function() {
+applyFilter(4, this.checked && new f.Sepia2());
+};
+$('brightness').onclick = function () {
+applyFilter(5, this.checked && new f.Brightness({
+  brightness: parseInt($('brightness-value').value, 10)
+}));
+};
+$('brightness-value').onchange = function() {
+applyFilterValue(5, 'brightness', parseInt(this.value, 10));
+};
+$('contrast').onclick = function () {
+applyFilter(6, this.checked && new f.Contrast({
+  contrast: parseInt($('contrast-value').value, 10)
+}));
+};
+$('contrast-value').onchange = function() {
+applyFilterValue(6, 'contrast', parseInt(this.value, 10));
+};
+$('saturate').onclick = function () {
+applyFilter(7, this.checked && new f.Saturate({
+  saturate: parseInt($('saturate-value').value, 10)
+}));
+};
+$('saturate-value').onchange = function() {
+applyFilterValue(7, 'saturate', parseInt(this.value, 10));
+};
+$('noise').onclick = function () {
+applyFilter(8, this.checked && new f.Noise({
+  noise: parseInt($('noise-value').value, 10)
+}));
+};
+$('noise-value').onchange = function() {
+applyFilterValue(8, 'noise', parseInt(this.value, 10));
+};
+$('gradient-transparency').onclick = function () {
+applyFilter(9, this.checked && new f.GradientTransparency({
+  threshold: parseInt($('gradient-transparency-value').value, 10)
+}));
+};
+$('gradient-transparency-value').onchange = function() {
+applyFilterValue(9, 'threshold', parseInt(this.value, 10));
+};
+$('pixelate').onclick = function() {
+applyFilter(10, this.checked && new f.Pixelate({
+  blocksize: parseInt($('pixelate-value').value, 10)
+}));
+};
+$('pixelate-value').onchange = function() {
+applyFilterValue(10, 'blocksize', parseInt(this.value, 10));
+};
+$('blur').onclick = function() {
+applyFilter(11, this.checked && new f.Convolute({
+  matrix: [ 1/9, 1/9, 1/9,
+            1/9, 1/9, 1/9,
+            1/9, 1/9, 1/9 ]
+}));
+};
+$('sharpen').onclick = function() {
+applyFilter(12, this.checked && new f.Convolute({
+  matrix: [  0, -1,  0,
+            -1,  5, -1,
+             0, -1,  0 ]
+}));
+};
+$('emboss').onclick = function() {
+applyFilter(13, this.checked && new f.Convolute({
+  matrix: [ 1,   1,  1,
+            1, 0.7, -1,
+           -1,  -1, -1 ]
+}));
+};
+$('tint').onclick = function() {
+applyFilter(14, this.checked && new f.Tint({
+  color: document.getElementById('tint-color').value,
+  opacity: parseFloat(document.getElementById('tint-opacity').value)
+}));
+};
+$('tint-color').onchange = function() {
+applyFilterValue(14, 'color', this.value);
+};
+$('tint-opacity').onchange = function() {
+applyFilterValue(14, 'opacity', parseFloat(this.value));
+};
+$('multiply').onclick = function() {
+applyFilter(15, this.checked && new f.Multiply({
+  color: document.getElementById('multiply-color').value
+}));
+};
+$('multiply-color').onchange = function() {
+applyFilterValue(15, 'color', this.value);
+};
+
+$('blend').onclick= function() {
+applyFilter(16, this.checked && new f.Blend({
+  color: document.getElementById('blend-color').value,
+  mode: document.getElementById('blend-mode').value
+}));
+};
+
+$('blend-mode').onchange = function() {
+applyFilterValue(16, 'mode', this.value);
+};
+
+$('blend-color').onchange = function() {
+applyFilterValue(16, 'color', this.value);
+};
+})();
+</script>
+
+</div>
+
+<script>
+  (function(){
+    var mainScriptEl = document.getElementById('main');
+    if (!mainScriptEl) return;
+    var preEl = document.createElement('pre');
+    var codeEl = document.createElement('code');
+    codeEl.innerHTML = mainScriptEl.innerHTML;
+    codeEl.className = 'language-javascript';
+    preEl.appendChild(codeEl);
+    document.getElementById('bd-wrapper').appendChild(preEl);
+  })();
+</script>
+
+<script>
+(function() {
+fabric.util.addListener(fabric.window, 'load', function() {
+var canvas = this.__canvas || this.canvas,
+    canvases = this.__canvases || this.canvases;
+
+canvas && canvas.calcOffset && canvas.calcOffset();
+
+if (canvases && canvases.length) {
+  for (var i = 0, len = canvases.length; i < len; i++) {
+    canvases[i].calcOffset();
+  }
+}
+});
+})();
+</script>
+</body>
+<scriptX>
+    var JSdata = '{"objects":[{"type":"image","originX":"left","originY":"top","left":533,"top":50.5,"width":852,"height":480,"fill":"rgb(0,0,0)","stroke":null,"strokeWidth":0,"strokeDashArray":null,"strokeLineCap":"butt","strokeLineJoin":"miter","strokeMiterLimit":10,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"clipTo":null,"backgroundColor":"","fillRule":"nonzero","globalCompositeOperation":"source-over","transformMatrix":null,"skewX":0,"skewY":0,"src":"http://localhost:8000/src/img/bad.jpg","filters":[{"type":"RemoveColor","color":[0,255,0]}],"resizeFilters":[],"crossOrigin":"","alignX":"none","alignY":"none","meetOrSlice":"meet"},{"type":"circle","originX":"left","originY":"top","left":100,"top":100,"width":100,"height":100,"fill":"red","stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeLineJoin":"miter","strokeMiterLimit":10,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"clipTo":null,"backgroundColor":"","fillRule":"nonzero","globalCompositeOperation":"source-over","transformMatrix":null,"skewX":0,"skewY":0,"radius":50,"startAngle":0,"endAngle":6.283185307179586}],"background":""}';
+    var canvas = new fabric.Canvas("canvas");
+        canvas.setWidth(window.innerWidth);
+        canvas.setHeight(window.innerHeight);
+
+        // setDPI(canvas,300);
+        // canvas.loadFromJSON(JSdata);
+        // canvas.renderAll();
+
+    var image = new fabric.Image.fromURL('/src/img/ok.jpg', function(img) {
+      // img.scale(0.5).setFlipX(false);
+      var filter = new fabric.Image.filters.RemoveColor({
+          threshold: 70,
+          // color: [29,30,34],
+          removeGreen:true
+        });
+        // console.log(img)
+        img.filters.push(filter);
+        img.applyFilters(canvas.renderAll.bind(canvas));
+
+        console.log(fabric.Image.filters)
+        canvas.add(img);
+        canvas.centerObject(img);
+
+        canvas.add(new fabric.Circle({
+            left: 100,
+            top: 100,
+            radius: 50,
+            fill: 'red'
+        }));
+
+
+
+      // console.log(JSON.stringify(canvas));
+
+
+        // var obj = canvas.getActiveObject();
+    });
+
+
+
+
+    // var filter = new fabric.Image.filters.RemoveWhite({
+    //     threshold: 40,
+    //     distance: 140
+    //   });
+    //
+    // canvas.add(imgInstance);
+
+
+    // var obj = canvas.getActiveObject();
+    //    obj.filters.push(filter);
+    //    obj.applyFilters(function () {
+    //         canvas.renderAll();
+    //     });
+      //  obj.applyFilters(canvas.renderAll.bind(canvas));
+
+    // var colorThief = new ColorThief();
+    // colorThief.getPalette(imgElement, 4)
+    // .forEach(function(one,i) {
+    // });
+
+
+
+
+            // ctx.drawImage(img, 0, 0);
+            // var imageData = ctx.getImageData(0,0,canvas.width, canvas.height);
+            // var data = imageData.data;
+
+
+</scriptX>
+</html>
